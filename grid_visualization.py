@@ -8,7 +8,7 @@ from tkinter import simpledialog
             delivery_pos为交付站的位置
             robot_positions为机器人的初始位置
             robot_actions为机器人的动作序列,传入的是地址
-            tasks是一个三维列表，第一个维度是机器人的编号，第二个维度是任务的队列，第三个维度存储了任务的信息，三个数据分别为任务的横纵坐标以及是否完成
+            tasks是一个三维列表，第一个维度是机器人的编号，第二个维度是任务的队列，第三个维度存储了任务的信息，三个数据分别为任务的横纵坐标以及是否完成是否规划0表示未规划，1表示已经规划，2表示完成
             action_pointers存储了当前每个机器人的动作到了第几个任务
         2.调用next可以让所有的机器人按着序列移动
         3.其他函数均是私有函数
@@ -29,6 +29,7 @@ class GridVisualization:
         self.tasks = tasks if tasks is not None else [[] for _ in range(len(robot_positions))]
         self.action_pointers = action_pointers if action_pointers is not None else [0] * len(robot_positions)
         self.task_added = False  # 新增任务标记
+        self.new_tasks_this_step = []  # 记录当前步骤新增任务的机器人ID
         self.root = tk.Tk()
         self.canvas = tk.Canvas(self.root, width=m*50, height=n*50)
         self.canvas.pack()
@@ -120,16 +121,19 @@ class GridVisualization:
             x = simpledialog.askinteger('添加任务', '输入目标x坐标:', parent=self.root, minvalue=1, maxvalue=self.n)
             y = simpledialog.askinteger('添加任务', '输入目标y坐标:', parent=self.root, minvalue=1, maxvalue=self.m)
             if x is not None and y is not None:
-                self.tasks[robot_idx].append((x, y, 0))
+                if 0 <= robot_idx < len(self.tasks):
+                    self.tasks[robot_idx].append((x, y, 0))
+                    self.new_tasks_this_step.append(robot_idx)
                 task_added = True
         self.task_added = task_added
         return task_added
     
     def next(self):
         self.root.mainloop()
-        current_state = self.task_added
+        current_tasks = self.new_tasks_this_step.copy()
+        self.new_tasks_this_step.clear()
         self.task_added = False  # 重置状态
-        return current_state
+        return current_tasks
     
     def run(self):
         self.root.mainloop()
@@ -137,7 +141,7 @@ class GridVisualization:
     def complete_mission(self, robot_idx, mission_idx):
         if robot_idx < len(self.tasks) and mission_idx < len(self.tasks[robot_idx]):
             x, y, _ = self.tasks[robot_idx][mission_idx]
-            self.tasks[robot_idx][mission_idx] = (x, y, 1)  # 标记为完成
+            self.tasks[robot_idx][mission_idx] = (x, y, 2)  # 标记为完成
             self.canvas.delete(f'mission_{mission_idx}')
             self.canvas.create_rectangle((y-1)*50+5, (x-1)*50+5, y*50-5, x*50-5, outline='green', width=2, tags=f'mission_{mission_idx}')
             text_id = self.canvas.create_text((y-1)*50+25, (x-1)*50+25, text=f'✓R{robot_idx}', fill='green')

@@ -135,7 +135,12 @@ def planrobot(planner, robotid, targetx, targety, begintime, robot_actions):
                         heappush(heap, new_node)
     
     
-
+def get_final_positions(planner,time,robotid):
+    for i in range(n):
+        for j in range(m):
+            if planner[time][i][j] == robotid:
+                return i+1,j+1
+    return None,None
 if __name__ == '__main__':
     n = 6  # 仓库的行数
     m = 6  # 仓库的列数
@@ -151,16 +156,49 @@ if __name__ == '__main__':
         planner[0][x-1][y-1] = idx
     
     # 测试路径规划
-    planrobot(planner, 0, delivery_pos[0], delivery_pos[1], 0, robot_actions)
-    for i in planner:
-        for j in i:
-            print(j)
-        print()
-    planrobot(planner, 1, delivery_pos[0], delivery_pos[1], 0, robot_actions)
+    for i in range (len (robot_positions)):
+        planrobot(planner, i, delivery_pos[0], delivery_pos[1], 0, robot_actions)
     action_pointers = [0] * len(robot_positions)
-    print(tasks)
     grid=GridVisualization(n,m,delivery_pos,robot_positions,robot_actions,tasks,action_pointers)
+    current_time = 0
     while True:
-        grid.next()
+        # 检测机器人动作队列
+        for i in range(len(robot_actions)):
+            if not robot_actions[i]:
+                # 获取当前位置
+                x, y = -1, -1
+                for row in range(n):
+                    for col in range(m):
+                        if planner[current_time][row][col] == i:
+                            x, y = row+1, col+1
+                            break
+                # 检查下一时间步是否被占用
+                if current_time+1 < len(planner):
+                    if planner[current_time+1][x-1][y-1] != -1:
+                        # 重新规划路径到相邻空闲位置
+                        planrobot(planner, i, x, y, current_time, robot_actions)
+        
+        current_time += 1
+        current_tasks = grid.next()
+        # 处理新增任务
+        print(current_tasks)
+        print(tasks)
+        for robot_id in current_tasks:
+            # 找到第一个未规划的任务并规划路径
+            for task_idx in range(len(tasks[robot_id])):
+                x, y, status = tasks[robot_id][task_idx]
+                if status == 0:
+                    # 从当前位置开始规划到任务点再到交付点的路径
+                    start_pos = get_final_positions(planner, len(robot_actions[robot_id]), robot_id)
+                    
+                    # 规划到任务点的路径
+                    planrobot(planner, robot_id, x, y, len(robot_actions[robot_id]), robot_actions)
+                    # 规划到交付点的路径
+                    planrobot(planner, robot_id, delivery_pos[0], delivery_pos[1], len(robot_actions[robot_id]), robot_actions)
+                    print(robot_actions)
+                    
+                    # 更新任务状态为已规划
+                    tasks[robot_id][task_idx] = (x, y, 1)
+                    break
     print(robot_actions)
     
