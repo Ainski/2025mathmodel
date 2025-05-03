@@ -52,7 +52,7 @@ class GridVisualization:
     
     def draw_robots(self):
         # 清除所有旧的任务标记
-        self.canvas.delete('mission')
+        #self.canvas.delete('mission')
             
         for idx, (x, y) in enumerate(self.robots):
             self.canvas.create_oval((y-1)*50+10, (x-1)*50+10, y*50-10, x*50-10, fill='blue', tags=f'robot_{idx}')
@@ -64,7 +64,7 @@ class GridVisualization:
             
             # 只绘制第一个未完成的任务
             for task_idx, (task_x, task_y, status) in enumerate(self.tasks[idx]):
-                if status == 0:  # 未完成的任务
+                if status !=2:  # 未完成的任务
                     self.canvas.create_rectangle((task_y-1)*50+5, (task_x-1)*50+5, task_y*50-5, task_x*50-5, 
                                               outline='red', width=2, tags=f'mission')
                     self.canvas.create_text((task_y-1)*50+25, (task_x-1)*50+25, text=f"M:R{idx}", fill='red')

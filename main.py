@@ -180,6 +180,14 @@ if __name__ == '__main__':
         
         current_time += 1
         current_tasks = grid.next()
+
+        # 任务完成检测
+        for robot_idx in range(len(grid.robots)):
+            current_x, current_y = grid.robots[robot_idx]
+            for task_idx, (task_x, task_y, status) in enumerate(grid.tasks[robot_idx]):
+                if status != 2 and current_x == task_x and current_y == task_y:
+                    grid.complete_mission(robot_idx, task_idx)
+                    break
         # 处理新增任务
         print(current_tasks)
         print(tasks)
@@ -200,5 +208,4 @@ if __name__ == '__main__':
                     # 更新任务状态为已规划
                     tasks[robot_id][task_idx] = (x, y, 1)
                     break
-    print(robot_actions)
     
